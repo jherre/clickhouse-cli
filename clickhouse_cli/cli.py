@@ -42,7 +42,7 @@ from clickhouse_cli.ui.completer import CHCompleter
 from clickhouse_cli.config import read_config
 
 # monkey-patch sqlparse
-sqlparse.keywords.SQL_REGEX = CHLexer.tokens
+# sqlparse.keywords.SQL_REGEX = CHLexer.tokens
 sqlparse.keywords.KEYWORDS = KEYWORDS
 sqlparse.keywords.KEYWORDS_COMMON = {}
 sqlparse.keywords.KEYWORDS_ORACLE = {}
