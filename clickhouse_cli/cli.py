@@ -3,6 +3,7 @@ import http.client
 import json
 import os
 import re
+import stat
 import sys
 import time
 import shutil
@@ -59,7 +60,7 @@ class CLI:
 
     def __init__(self, host, port, user, password, database,
                  settings, format, format_stdin, multiline, stacktrace,
-                 vi_mode, cookie):
+                 vi_mode, cookie, history_path):
         self.config = None
 
         self.host = host
@@ -75,6 +76,7 @@ class CLI:
         self.stacktrace = stacktrace
         self.vi_mode = vi_mode
         self.server_version = None
+        self.history_path = os.path.expanduser(history_path)
 
         self.query_ids = []
         self.client = None
@@ -261,8 +263,13 @@ class CLI:
 
         layout = Layout(root_container)
 
+        if not os.path.exists(self.history_path):
+            with open(self.history_path, "ab") as _f:
+                pass
+        os.chmod(self.history_path, (stat.S_IREAD | stat.S_IWRITE))
+
         hist = FileHistory(
-                filename=os.path.expanduser('~/.clickhouse-cli_history')
+                filename=self.history_path
             )
         self.completer = CHCompleter(self.client, self.metadata)
 
@@ -550,9 +557,10 @@ class CLI:
 @click.option('--stacktrace', is_flag=True, help="Print stacktraces received from the server.")
 @click.option('--vi-mode', is_flag=True, help="Enable Vi input mode")
 @click.option('--version', is_flag=True, help="Show the version and exit.")
+@click.option('--history', type=click.Path(), default="~/.clickhouse-cli_history", help="File to use for history.")
 @click.argument('files', nargs=-1, type=click.File('rb'))
 def run_cli(host, port, user, password, arg_password, database, settings, query, format,
-            format_stdin, multiline, stacktrace, vi_mode, cookie, version, files):
+            format_stdin, multiline, stacktrace, vi_mode, cookie, version, history, files):
     """
     A third-party client for the ClickHouse DBMS.
     """
@@ -577,7 +585,8 @@ def run_cli(host, port, user, password, arg_password, database, settings, query,
 
     # TODO: Rename the CLI's instance into something more feasible
     cli = CLI(
-        host, port, user, password, database, settings, format, format_stdin, multiline, stacktrace, vi_mode, cookie
+        host, port, user, password, database, settings, format, format_stdin, 
+        multiline, stacktrace, vi_mode, cookie, history
     )
     cli.run(query, data_input)
 
